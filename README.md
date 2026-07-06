@@ -16,15 +16,7 @@ This project was built as a portfolio project to demonstrate practical machine l
 
 ## Business Problem
 
-In manufacturing environments, reactive maintenance often leads to unnecessary downtime and expensive repairs. By leveraging machine learning, we can identify machines that are likely to fail before the failure occurs.
-
-The final model helps maintenance teams:
-
-- Detect high-risk machines early
-- Reduce unplanned downtime
-- Minimize maintenance costs
-- Improve production efficiency
-- Increase equipment reliability
+Unexpected machine failures lead to costly downtime, production delays, and increased maintenance costs. This project develops a machine learning model that predicts failures from sensor data, enabling maintenance teams to intervene before a breakdown occurs.
 
 Since missing an actual machine failure is significantly more costly than performing an unnecessary inspection, **Recall** was treated as one of the primary evaluation metrics throughout this project.
 
@@ -96,6 +88,28 @@ The following analyses were performed:
 - Correlation heatmap
 - Feature relationship analysis
 
+### Target Distribution
+
+The dataset is highly imbalanced — only about 3.4% of machines in the dataset have failed.
+
+![Target Distribution](images/01_target_distribution.png)
+
+### Sensor Distributions
+
+![Sensor Distributions](images/02_sensor_distributions.png)
+
+### Failure Rate by Machine Type
+
+![Failure by Type](images/04_machine_failure_by_type.png)
+
+### Sensor Behavior by Failure Status
+
+![Boxplots by Failure](images/05_boxplots_by_failure.png)
+
+### Correlation Heatmap
+
+![Correlation Heatmap](images/06_correlation_heatmap.png)
+
 ### Key Findings
 
 - The dataset is highly imbalanced (approximately 96.6% healthy machines).
@@ -149,6 +163,16 @@ Evaluation metrics:
 | Gradient Boosting | 0.983 | 0.871 | 0.598 | 0.709 | **0.978** |
 | **Gradient Boosting (Tuned)** | **0.984** | 0.829 | 0.667 | **0.739** | 0.966 |
 
+![Metric Comparison](images/08_metric_comparison.png)
+
+![ROC Curves](images/09_roc_curves.png)
+
+### Confusion Matrix — Final Model
+
+![Confusion Matrix Tuned](images/10_confusion_matrix_tuned_model.png)
+
+*Individual confusion matrices for all five baseline models are available in the `images/` folder and in the notebook itself.*
+
 ---
 
 ## Cross Validation Results
@@ -188,6 +212,14 @@ Although Precision and ROC-AUC decreased slightly, the improvement in Recall ali
 
 ---
 
+## Precision-Recall Trade-off
+
+Because failures are rare (~3.4% of the data), ROC-AUC alone can look overly optimistic. The precision-recall curve below gives a clearer picture of how the tuned model performs specifically on the minority (failure) class.
+
+![Precision-Recall Curve](images/11_precision_recall_curve.png)
+
+---
+
 ## Feature Importance
 
 Feature importance analysis showed that the most influential variables were:
@@ -195,6 +227,8 @@ Feature importance analysis showed that the most influential variables were:
 - Tool Wear
 - Torque
 - Rotational Speed
+
+![Feature Importance](images/12_feature_importance.png)
 
 These features provide the strongest predictive signals for identifying machine failures.
 
@@ -225,8 +259,12 @@ predictive-maintenance-ml/
 ├── notebooks/
 │   └── Predictive_Maintenance.ipynb
 │
+├── images/
+│   └── *.png
+│
 ├── models/
-│   └── best_gradient_boosting.pkl
+│   ├── best_gradient_boosting.pkl
+│   └── best_gradient_boosting_params.json
 │
 ├── results/
 │   ├── model_comparison.csv
@@ -286,6 +324,17 @@ Possible future enhancements include:
 - Performed hyperparameter tuning using GridSearchCV.
 - Selected the final model based on business requirements rather than accuracy alone.
 - Saved the trained model for future deployment using Joblib.
+
+---
+
+## What I Learned
+
+- **Accuracy is a misleading metric on imbalanced data.** With ~96.6% of machines healthy, a model that never predicts a failure would still score 96.6% accuracy while being completely useless. This project pushed me to design around Recall and F1 instead, since those actually reflect whether the model catches real failures.
+- **Data leakage isn't always obvious.** The dataset includes five failure-mode flags (TWF, HDF, PWF, OSF, RNF) that are direct components of the target variable. It would have been easy to include them as "just more sensor columns" and get suspiciously perfect results — excluding them explicitly was a deliberate design decision, not an accident.
+- **A single train/test split can be misleading.** Some models looked strong on the initial split but showed much higher variance across folds during cross-validation. That's what convinced me to pick Gradient Boosting over models with a slightly better single-split score but less stability.
+- **Optimizing for one metric has trade-offs.** Tuning `GridSearchCV` purely on Recall improved failure detection but cost some precision — a reminder that "better" depends on what a false negative costs versus a false alarm, not just which number goes up.
+- **Preprocessing needs to match the model family.** Scaling matters for Logistic Regression and SVM but is irrelevant (and can even be counterproductive) for tree-based models, which is why this project uses two separate `ColumnTransformer` pipelines instead of one-size-fits-all preprocessing.
+- **Saving a model isn't the same as verifying it works.** Reloading a `joblib` file and getting predictions back doesn't guarantee correctness on its own — asserting the reloaded model's outputs match the original in-memory model turned this from "looks fine" into an actual verified guarantee.
 
 ---
 
