@@ -1,0 +1,6 @@
+Model,Accuracy Mean,Accuracy Std,Precision Mean,Recall Mean,Recall Std,F1 Mean,ROC-AUC Mean
+Logistic Regression,0.97,0.002,0.725,0.186,0.048,0.292,0.896
+Decision Tree,0.976,0.002,0.641,0.652,0.043,0.646,0.82
+Random Forest,0.981,0.001,0.895,0.507,0.049,0.645,0.963
+Gradient Boosting,0.985,0.003,0.874,0.64,0.106,0.734,0.972
+SVM,0.974,0.001,0.917,0.268,0.035,0.413,0.949
